@@ -13,7 +13,7 @@ export const config = {
   },
   jwt: {
     JWT_SECRET_KEY: envVars.JWT_SECRET_KEY,
-    JWT_EXPIRES_TIME: envVars.JWT_EXPIRES_TIME,
+    JWT_EXPIRES_TIME: Number(envVars.JWT_EXPIRES_TIME) * 1000 * 60 * 60,
   },
   TESTNET,
 };

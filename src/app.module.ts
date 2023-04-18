@@ -5,13 +5,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AllExceptionFilter } from './http-exception.filter';
 import { dataSourceOptions } from './database/database.module';
 import { DatabaseModule } from './database/mongoDB.module';
-// import { AuthModule } from './auth/auth.module';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+import { RolesModule } from './roles/roles.module';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot(dataSourceOptions),
     DatabaseModule,
-    // AuthModule,
+    AuthModule,
+    UsersModule,
+    RolesModule,
   ],
   controllers: [],
   providers: [
