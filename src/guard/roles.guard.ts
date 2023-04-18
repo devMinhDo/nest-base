@@ -10,6 +10,7 @@ import { UserRoles } from 'src/users/constant/user-role.constant';
 import { ROLES_KEY } from './roles.decorator';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
+import { UserStatus } from '../users/constant/user-status.constant';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -44,14 +45,21 @@ export class RolesGuard implements CanActivate {
 
     const token = parts[1];
     const decoded = await this.jwtService.verify(token);
-    console.log('check decoded', decoded);
     const user = await this.usersService.findOne({
       email: decoded.email,
     });
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
+    }
+    if (user.status === UserStatus.DISABLE) {
+      throw new HttpException(
+        'Account your have block!',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
     request.user = user;
     request.roles = decoded.roles;
     const { roles } = context.switchToHttp().getRequest();
-    console.log(roles);
     return requiredRoles.some((role) => roles?.includes(role));
   }
 }

@@ -8,6 +8,7 @@ import { RegisterDto } from './dto/register.dto';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { responseData, responseMessage } from 'src/utils/responseData';
 import { RolesService } from '../roles/roles.service';
+import { UserStatus } from "../users/constant/user-status.constant";
 
 @Injectable()
 export class AuthService {
@@ -23,6 +24,12 @@ export class AuthService {
     this.logger.log(`Request to login with email: ${loginEmailDto.email}`);
     const user = await this.usersService.findOneByEmail(loginEmailDto.email);
     if (!user) throw new HttpException(`User not found`, HttpStatus.OK);
+    if (user.status === UserStatus.DISABLE) {
+      throw new HttpException(
+        'Account your have block!',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
     const match = await this.comparePassword(
       loginEmailDto.password,
       user.password,

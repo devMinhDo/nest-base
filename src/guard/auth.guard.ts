@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
+import { UserStatus } from "../users/constant/user-status.constant";
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -41,6 +42,15 @@ export class AuthGuard implements CanActivate {
       const user = await this.usersService.findOne({
         email: decoded.email,
       });
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
+      }
+      if (user.status === UserStatus.DISABLE) {
+        throw new HttpException(
+          'Account your have block!',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
       request.user = user;
       request.roles = decoded.roles;
       if (user) return true;

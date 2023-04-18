@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Post,
   Put,
   UseGuards,
 } from '@nestjs/common';
@@ -21,8 +22,7 @@ import { RolesGuard } from '../guard/roles.guard';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @UseGuards(RolesGuard)
-  @Roles(UserRoles.ADMIN)
+  @UseGuards(AuthGuard)
   @Get('/get-all')
   findAll() {
     return this.usersService.findAll();
@@ -34,14 +34,16 @@ export class UsersController {
     return this.usersService.findOneById(id);
   }
 
-  @UseGuards(AuthGuard)
-  @Put('/update')
+  @UseGuards(RolesGuard)
+  @Roles(UserRoles.ADMIN)
+  @Post('/update')
   update(@Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(updateUserDto);
   }
 
-  @UseGuards(AuthGuard)
-  @Delete('/delete/:id')
+  @UseGuards(RolesGuard)
+  @Roles(UserRoles.ADMIN)
+  @Post('/delete/:id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
