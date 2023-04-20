@@ -8,6 +8,7 @@ import { DatabaseModule } from './database/mongoDB.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
+import { SessionModule } from './session/session.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { RolesModule } from './roles/roles.module';
     AuthModule,
     UsersModule,
     RolesModule,
+    SessionModule,
   ],
   controllers: [],
   providers: [

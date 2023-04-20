@@ -8,7 +8,11 @@ import { RegisterDto } from './dto/register.dto';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { responseData, responseMessage } from 'src/utils/responseData';
 import { RolesService } from '../roles/roles.service';
-import { UserStatus } from "../users/constant/user-status.constant";
+import { UserStatus } from '../users/constant/user-status.constant';
+import { LOGIN_FAILED } from './dto/login-failed.dto';
+import { ACCOUNT_LOCK } from './dto/account-lock.dto';
+import { BaseResDto } from '../config/dto/base-res.dto';
+import { AuthResultDto } from './dto/auth-result.dto';
 
 @Injectable()
 export class AuthService {
@@ -20,31 +24,24 @@ export class AuthService {
     private rolesService: RolesService,
   ) {}
 
-  async loginWithEmail(loginEmailDto: LoginEmailDto) {
-    this.logger.log(`Request to login with email: ${loginEmailDto.email}`);
-    const user = await this.usersService.findOneByEmail(loginEmailDto.email);
-    if (!user) throw new HttpException(`User not found`, HttpStatus.OK);
+  async loginWithEmail(loginEmailDto: LoginEmailDto, res) {
+    const { userNameOrEmailAddress, password, rememberClient } = loginEmailDto;
+    const user = await this.usersService.findOneByEmail(userNameOrEmailAddress);
+    if (!user) return LOGIN_FAILED;
     if (user.status === UserStatus.DISABLE) {
-      throw new HttpException(
-        'Account your have block!',
-        HttpStatus.UNAUTHORIZED,
-      );
+      return res.status(500).json(ACCOUNT_LOCK);
     }
-    const match = await this.comparePassword(
-      loginEmailDto.password,
-      user.password,
-    );
-    if (!match)
-      throw new HttpException('Password is not correct.', HttpStatus.OK);
-
-    if (!user.emailVerified) {
-      throw new HttpException(
-        'Email is not verified, please verify your email first!',
-        HttpStatus.OK,
-      );
-    }
-
-    return this.generateToken(user);
+    const match = await this.comparePassword(password, user.password);
+    if (!match) return res.status(500).json(ACCOUNT_LOCK);
+    const accessToken = this.generateToken(user, rememberClient);
+    return res.status(200).json({
+      ...BaseResDto,
+      result: {
+        ...AuthResultDto,
+        accessToken: accessToken,
+        userId: user._id,
+      },
+    });
   }
   async register(registerDto: RegisterDto) {
     this.logger.log(`Request to register with address: ${registerDto.address}`);
@@ -67,9 +64,13 @@ export class AuthService {
     return await bcrypt.compare(password, storePasswordHash);
   }
 
-  async generateToken(user: User) {
-    const roles = user.roles.map((item) => item.code);
-    const access_token = this.jwtService.sign({ email: user.email, roles });
-    return responseData({ access_token }, '');
+  async generateToken(user: User, rememberClient: boolean) {
+    const roles = user.roleNames.map((item) => item.name);
+    const access_token = this.jwtService.sign({
+      email: user.emailAddress,
+      roles,
+      rememberClient,
+    });
+    return access_token;
   }
 }

@@ -5,9 +5,13 @@ export class LoginEmailDto {
   @ApiProperty()
   @IsNotEmpty()
   @IsEmail()
-  email: string;
+  userNameOrEmailAddress: string;
 
   @ApiProperty()
   @IsNotEmpty()
   password: string;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  rememberClient: boolean;
 }

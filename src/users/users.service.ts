@@ -8,6 +8,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UserRoles } from 'src/users/constant/user-role.constant';
 import { UserStatus } from './constant/user-status.constant';
 import { User, UserDocument } from './schemas/user.schema';
+import { LOGIN_FAILED } from '../auth/dto/login-failed.dto';
 const bcrypt = require('bcryptjs');
 
 @Injectable()
@@ -30,13 +31,17 @@ export class UsersService {
 
   async findOneById(id: string) {
     this.logger.log(`Request to find user by id: ${id}`);
-    const data = await this.userModel.findOne({ _id: id }).populate('roles');
+    const data = await this.userModel
+      .findOne({ _id: id })
+      .populate('roleNames');
     return responseData(data, 'Found a user');
   }
 
   async findOneByEmail(email: string) {
     // this.logger.log(`Request to find user by email: ${email}`);
-    const user = await this.userModel.findOne({ email }).populate('roles');
+    const user = await this.userModel
+      .findOne({ emailAddress: email })
+      .populate('roleNames');
     if (!user)
       throw new HttpException(
         `User not exist with email: ${email} `,
@@ -90,6 +95,7 @@ export class UsersService {
 
   async update(updateUserDto: UpdateUserDto) {
     const user = await this.userModel.findById(updateUserDto._id);
+    console.log('check user: ', user);
     if (!user) throw new HttpException('Not found user', HttpStatus.OK);
 
     const roles = [];
@@ -104,7 +110,7 @@ export class UsersService {
     if (updateUserDto.password)
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
 
-    if (updateUserDto.email && updateUserDto.email !== user.email) {
+    if (updateUserDto.email && updateUserDto.email !== user.emailAddress) {
       await this.checkIsExistedEmail(updateUserDto.email);
     }
 
@@ -128,7 +134,7 @@ export class UsersService {
 
   async checkIsExistedEmail(email: string) {
     const user = await this.userModel.findOne({ email: email });
-    console.log('user', user)
+    console.log('user', user);
     if (!user) return true;
     else throw new HttpException('Email is existed', HttpStatus.OK);
   }
