@@ -12,7 +12,10 @@ export const filterOptions = (query, keyFilter) => {
       filter.createdAt = { $lte: new Date(Number(query.to)) };
     }
   } else if (query.to) {
-    filter.createdAt = { $gte: new Date(Number(query.from)), $lte: new Date(Number(query.to)) };
+    filter.createdAt = {
+      $gte: new Date(Number(query.from)),
+      $lte: new Date(Number(query.to)),
+    };
   } else {
     filter.createdAt = { $gte: new Date(Number(query.from)) };
   }

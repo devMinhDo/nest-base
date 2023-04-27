@@ -12,15 +12,42 @@ export class RolesService {
   }
 
   async init() {
-    const roleUser = await this.roleModel.findOne({ code: UserRoles.USER });
-    const roleAdmin = await this.roleModel.findOne({ code: UserRoles.ADMIN });
-    if (!roleUser)
-      await this.roleModel.create({ code: UserRoles.USER, name: 'user' });
-    if (!roleAdmin)
-      await this.roleModel.create({ code: UserRoles.ADMIN, name: 'admin' });
+    const roleUser = await this.roleModel.findOne({
+      displayName: UserRoles.USER,
+    });
+    const roleAdmin = await this.roleModel.findOne({
+      displayName: UserRoles.ADMIN,
+    });
+    if (!roleUser) {
+      await this.roleModel.create({
+        displayName: UserRoles.USER,
+        name: 'user',
+        id: 1,
+        normalizedName: UserRoles.USER,
+        description: UserRoles.USER,
+      });
+    }
+
+    if (!roleAdmin) {
+      await this.roleModel.create({
+        displayName: UserRoles.ADMIN,
+        name: 'admin',
+        id: 2,
+        normalizedName: 'admin',
+        description: 'admin',
+      });
+    }
   }
 
   async findByCode(code: string) {
-    return this.roleModel.findOne({ code });
+    return this.roleModel.findOne({ displayName: code });
+  }
+
+  async getRole(filter = {}) {
+    return this.roleModel.find(filter);
+  }
+
+  async getRoleId(arrNameRoles) {
+    return this.roleModel.find({ name: { $in: arrNameRoles } }).select('_id');
   }
 }

@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
 import { SessionModule } from './session/session.module';
+import { ConfigurationModule } from './configuration/configuration.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { SessionModule } from './session/session.module';
     UsersModule,
     RolesModule,
     SessionModule,
+    ConfigurationModule,
   ],
   controllers: [],
   providers: [

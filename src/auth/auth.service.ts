@@ -1,4 +1,11 @@
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import {
+  forwardRef,
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
 import { LoginEmailDto } from './dto/login-email.dto';
@@ -20,6 +27,8 @@ export class AuthService {
 
   constructor(
     private jwtService: JwtService,
+
+    @Inject(forwardRef(() => UsersService))
     private usersService: UsersService,
     private rolesService: RolesService,
   ) {}
@@ -33,7 +42,8 @@ export class AuthService {
     }
     const match = await this.comparePassword(password, user.password);
     if (!match) return res.status(500).json(ACCOUNT_LOCK);
-    const accessToken = this.generateToken(user, rememberClient);
+    const accessToken = await this.generateToken(user, rememberClient);
+    console.log(accessToken);
     return res.status(200).json({
       ...BaseResDto,
       result: {
@@ -45,14 +55,21 @@ export class AuthService {
   }
   async register(registerDto: RegisterDto) {
     this.logger.log(`Request to register with address: ${registerDto.address}`);
+    const findUser = await this.usersService.findOne({});
     const createUserDto = new CreateUserDto();
+
+    if (!findUser) {
+      createUserDto.id = 1;
+    } else {
+      createUserDto.id = findUser.id + 1;
+    }
     createUserDto.address = registerDto.address;
     createUserDto.name = registerDto.name;
-    createUserDto.email = registerDto.email;
+    createUserDto.emailAddress = registerDto.email;
     createUserDto.emailVerified = true;
+    createUserDto.sex = registerDto.sex;
     const hashPassword = await this.hashPassword(registerDto.password);
     createUserDto.password = hashPassword;
-
     await this.usersService.create(createUserDto);
     return responseMessage('Registered successfully', true);
   }

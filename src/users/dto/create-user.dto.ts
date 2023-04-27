@@ -5,12 +5,21 @@ import { Role } from 'src/roles/schema/role.schema';
 
 export class CreateUserDto {
   @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  userName: string;
+
+  @ApiProperty()
   name: string;
+
+  @ApiProperty()
+  surname: string;
 
   @ApiProperty()
   @IsNotEmpty()
   @IsEmail()
-  email: string;
+  emailAddress: string;
 
   @ApiProperty()
   @IsNotEmpty()
@@ -22,5 +31,9 @@ export class CreateUserDto {
   password: string;
 
   emailVerified = false;
-  roles: Role[];
+  roleNames: Role[];
+
+  @ApiProperty()
+  @IsNotEmpty()
+  sex: number;
 }
