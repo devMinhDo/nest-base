@@ -6,13 +6,14 @@ import {
   Get,
   Query,
   Param,
-  Req, UseGuards
-} from "@nestjs/common";
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { GetAllDto } from './dto/get-all.dto';
 import { SaveDto } from './dto/save.dto';
-import { AuthGuard } from "../guard/auth.guard";
+import { AuthGuard } from '../guard/auth.guard';
 @ApiBearerAuth()
 @ApiTags('services/app/Project')
 @Controller('services/app/Project')
