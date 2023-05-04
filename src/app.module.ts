@@ -10,7 +10,13 @@ import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
 import { SessionModule } from './session/session.module';
 import { ConfigurationModule } from './configuration/configuration.module';
-
+import { CustomersModule } from 'src/customer/customers.module';
+import { TaskModule } from 'src/task/task.module';
+import { ProjectsModule } from './project/projects.module';
+import { ProjectTaskModule } from './project-task/project-task.module';
+import { ProjectUserModule } from 'src/project-user/project-user.module';
+import { MyTimeSheetModule } from './my-time-sheet/my-time-sheet.module';
+import { TimeKeepModule } from './time-keep/time-keep.module';
 @Module({
   imports: [
     TypeOrmModule.forRoot(dataSourceOptions),
@@ -20,6 +26,13 @@ import { ConfigurationModule } from './configuration/configuration.module';
     RolesModule,
     SessionModule,
     ConfigurationModule,
+    CustomersModule,
+    TaskModule,
+    ProjectsModule,
+    ProjectTaskModule,
+    ProjectUserModule,
+    MyTimeSheetModule,
+    TimeKeepModule,
   ],
   controllers: [],
   providers: [

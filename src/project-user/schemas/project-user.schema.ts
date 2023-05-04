@@ -14,7 +14,7 @@ export class ProjectUser {
   userId: number;
 
   @Prop({ enum: ProjectUserTypeEnum, required: true })
-  type: string;
+  type: number;
 }
 
 export const ProjectUserSchema = SchemaFactory.createForClass(ProjectUser);

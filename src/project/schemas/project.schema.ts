@@ -25,7 +25,7 @@ export class Project {
 
   @Prop({ required: true })
   customerId: number;
-  @Prop({ required: true })
+  @Prop({ default: false })
   isAllUserBelongTo: boolean;
 }
 

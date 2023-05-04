@@ -21,7 +21,6 @@ export class SessionService {
       });
     const token = req.headers['authorization'].split(' ')[1];
     const { email } = await this.jwtService.verify(token);
-    console.log('email', email);
     const user = await this.usersService.findOne({
       emailAddress: email,
     });
