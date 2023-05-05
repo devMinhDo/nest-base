@@ -17,6 +17,7 @@ import { ProjectTaskModule } from './project-task/project-task.module';
 import { ProjectUserModule } from 'src/project-user/project-user.module';
 import { MyTimeSheetModule } from './my-time-sheet/my-time-sheet.module';
 import { TimeKeepModule } from './time-keep/time-keep.module';
+import { TimeSheetModule } from './time-sheet/time-sheet.module';
 @Module({
   imports: [
     TypeOrmModule.forRoot(dataSourceOptions),
@@ -33,6 +34,7 @@ import { TimeKeepModule } from './time-keep/time-keep.module';
     ProjectUserModule,
     MyTimeSheetModule,
     TimeKeepModule,
+    TimeSheetModule,
   ],
   controllers: [],
   providers: [

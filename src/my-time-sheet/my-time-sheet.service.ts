@@ -5,6 +5,8 @@ import { TimeSheet, TimeSheetDocument } from './schemas/time-sheet.schema';
 import { BaseResDto } from '../config/dto/base-res.dto';
 import { CreateDto } from './dto/create.dto';
 import { TimeSheetStatus } from './constant/time-sheet-status.constant';
+import { responseError } from '../utils/responseData';
+import { UpdateTimeSheetDto } from './dto/update-time-sheet.dto';
 
 @Injectable()
 export class MyTimeSheetService {
@@ -15,14 +17,6 @@ export class MyTimeSheetService {
 
   async getAllTimeSheetOfUser(query: any, userId: number) {
     const { startDate, endDate } = query;
-    const test = await this.timeSheetModel.find({
-      userId: userId,
-      $and: [
-        { dateAt: { $gte: new Date(startDate) } },
-        { dateAt: { $lte: new Date(endDate) } },
-      ],
-    });
-    console.log(test);
     const result = await this.timeSheetModel.aggregate([
       {
         $match: {
@@ -150,6 +144,14 @@ export class MyTimeSheetService {
   }
 
   async create(createDto: CreateDto, userId) {
+    const currentDate = new Date(createDto.dateAt);
+    const startDate = new Date(currentDate.setHours(0, 0, 0, 0));
+    const endDate = new Date(currentDate.setHours(23, 59, 59, 999));
+    const findTimeSheet = await this.timeSheetModel.findOne({
+      userId: userId,
+      $and: [{ dateAt: { $gte: startDate } }, { dateAt: { $lte: endDate } }],
+    });
+    if (findTimeSheet) return responseError(`You logger timeSheet today!!`);
     createDto.userId = userId;
     createDto.status = TimeSheetStatus.New;
     createDto.id = await this.findLastId();
@@ -193,5 +195,242 @@ export class MyTimeSheetService {
       id = find.id + 1;
     }
     return id;
+  }
+
+  async findByFilter(filter) {
+    return this.timeSheetModel.find(filter);
+  }
+  async getTimeSheetsOfUser(
+    userId: number,
+    startDate: number,
+    endDate: number,
+  ) {
+    return this.timeSheetModel.find({
+      userId,
+      $and: [{ dateAt: { $gte: startDate } }, { dateAt: { $lte: endDate } }],
+    });
+  }
+
+  async update(data) {
+    return this.timeSheetModel.updateOne({ id: data.id }, data);
+  }
+
+  async updateByFilter(filter, update, option = { new: true }) {
+    return this.timeSheetModel.findOneAndUpdate(filter, update, option);
+  }
+
+  async updateMany(filter, update) {
+    return this.timeSheetModel.updateMany(filter, update);
+  }
+
+  async submitToPending(body: any, userId: number) {
+    const { startDate, endDate } = body;
+    const timeSheets = await this.getTimeSheetsOfUser(
+      userId,
+      new Date(startDate).getTime(),
+      new Date(endDate).getTime(),
+    );
+
+    const updatePromises = timeSheets.map(async (timesheet) => {
+      if (timesheet.status === 0) {
+        timesheet.status = 1;
+        await this.update(timesheet);
+      }
+    });
+
+    const updateResults = await Promise.all(updatePromises);
+    const count = updateResults.filter((result) => result).length;
+
+    return {
+      ...BaseResDto,
+      result: `Submit success ${count} timeSheets`,
+    };
+  }
+
+  async delete(Id: number, userId) {
+    const findTimeSheet = await this.timeSheetModel.findOne({
+      id: Id,
+      userId: userId,
+    });
+    if (!findTimeSheet)
+      return responseError(`TimeSheet not found`, `TimeSheet not found`);
+    await this.timeSheetModel.deleteOne({ id: Id });
+    return {
+      ...BaseResDto,
+      result: true,
+    };
+  }
+
+  async getTimeSheet(id: number) {
+    console.log(id);
+    const findTimeSheet = await this.timeSheetModel.findOne({ id: id });
+    return {
+      ...BaseResDto,
+      result: findTimeSheet,
+    };
+  }
+
+  async updateTimeSheet(updateTimeSheetDto: UpdateTimeSheetDto, userId) {
+    const checkTimeSheetByUserId = await this.timeSheetModel.findOne({
+      id: updateTimeSheetDto.id,
+      userId: userId,
+    });
+    if (!checkTimeSheetByUserId)
+      return responseError(`TimeSheet not found`, `TimeSheet not found!!`);
+    const updateTimeSheet = await this.timeSheetModel.findOneAndUpdate(
+      { id: updateTimeSheetDto.id },
+      updateTimeSheetDto,
+      { new: true },
+    );
+    const {
+      id,
+      typeOfWork,
+      note,
+      projectTaskId,
+      status,
+      projectTargetUserId,
+      workingTime,
+      dateAt,
+      targetUserWorkingTime,
+      isCharged,
+    } = updateTimeSheet;
+    return {
+      ...BaseResDto,
+      result: {
+        id,
+        typeOfWork,
+        note,
+        projectTaskId,
+        status,
+        projectTargetUserId,
+        workingTime,
+        dateAt,
+        targetUserWorkingTime,
+        isCharged,
+      },
+    };
+  }
+
+  async getTimeSheetByAggregate(
+    startDate: number,
+    endDate: number,
+    status: number,
+  ) {
+    const result = await this.timeSheetModel.aggregate([
+      {
+        $match: {
+          status: status,
+        },
+      },
+      {
+        $lookup: {
+          from: 'projectTask',
+          localField: 'projectTaskId',
+          foreignField: 'id',
+          as: 'projectTask',
+        },
+      },
+      { $unwind: { path: '$projectTask', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'user',
+          localField: 'userId',
+          foreignField: 'id',
+          as: 'user',
+        },
+      },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'task',
+          localField: 'projectTask.taskId',
+          foreignField: 'id',
+          as: 'task',
+        },
+      },
+      { $unwind: { path: '$task', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'projectUser',
+          let: { projectId: 'projectTask.projectId' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['projectId', 'projectId'] },
+                    { $eq: ['type', 1] },
+                  ],
+                },
+              },
+            },
+            {
+              $lookup: {
+                from: 'user',
+                let: { userId: 'userId' },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [{ $eq: ['id', 'userId'] }],
+                      },
+                    },
+                  },
+                ],
+                as: 'name',
+              },
+            },
+          ],
+          as: 'listPM',
+        },
+      },
+      { $unwind: { path: '$listPM', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'project',
+          localField: 'projectTask.projectId',
+          foreignField: 'id',
+          as: 'project',
+        },
+      },
+      { $unwind: { path: '$project', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'customer',
+          localField: 'project.customerId',
+          foreignField: 'id',
+          as: 'customer',
+        },
+      },
+      { $unwind: { path: '$customer', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          status: 1,
+          workingTime: 1,
+          dateAt: 1,
+          projectId: '$projectTask.projectId',
+          user: '$user.name',
+          userId: 1,
+          taskId: '$projectTask.taskId',
+          taskName: '$task.name',
+          mytimesheetNote: '$note',
+          customerName: '$customer.name',
+          projectName: '$project.name',
+          projectCode: '$project.code',
+          typeOfWork: 1,
+          isCharged: 1,
+          isUserInProject: { $literal: true },
+          branchName: '$user.branch',
+          branch: '$user.branch',
+          type: '$user.type',
+          avatarPath: '$user.avatarPath',
+          avatarFullPath: '$user.avatarFullPath',
+          level: '$user.level',
+          listPM: '$listPM.name.name',
+          id: 1,
+        },
+      },
+    ]);
+    return result;
   }
 }
