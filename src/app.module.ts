@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AllExceptionFilter } from './http-exception.filter';
-import { dataSourceOptions } from './database/database.module';
+// import { dataSourceOptions } from './database/database.module';
 import { DatabaseModule } from './database/mongoDB.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -20,7 +20,7 @@ import { TimeKeepModule } from './time-keep/time-keep.module';
 import { TimeSheetModule } from './time-sheet/time-sheet.module';
 @Module({
   imports: [
-    TypeOrmModule.forRoot(dataSourceOptions),
+    // TypeOrmModule.forRoot(dataSourceOptions),
     DatabaseModule,
     AuthModule,
     UsersModule,
